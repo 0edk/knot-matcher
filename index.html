@@ -1,16 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Graph Isomorphism</title>
+<title>Unravel</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    background: #0f0f13;
-    color: #e8e4dc;
-    font-family: 'Courier New', monospace;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -25,22 +22,6 @@
     gap: 16px;
   }
 
-  h1 {
-    font-size: 1.1rem;
-    font-weight: 400;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: #aaa49a;
-  }
-
-  #round-badge {
-    font-size: 0.8rem;
-    letter-spacing: 0.12em;
-    color: #5a9f78;
-    border: 1px solid #2a5a3a;
-    padding: 2px 8px;
-  }
-
   #graphs {
     display: flex;
     gap: 20px;
@@ -48,23 +29,14 @@
     justify-content: center;
   }
 
-  .graph-wrap {
+  #graphs > canvas {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 8px;
   }
 
-  .graph-label {
-    font-size: 0.7rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: #55524c;
-  }
-
   canvas {
-    background: #16161d;
-    border: 1px solid #2a2a35;
     cursor: default;
     display: block;
   }
@@ -78,53 +50,26 @@
   }
 
   button {
-    background: none;
-    border: 1px solid #3a3a48;
-    color: #aaa49a;
-    font-family: inherit;
-    font-size: 0.78rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    padding: 8px 18px;
     cursor: pointer;
-    transition: border-color 0.15s, color 0.15s;
   }
-  button:hover { border-color: #5a9f78; color: #5a9f78; }
-  button:active { background: #1a2e22; }
 
   #status {
-    font-size: 0.75rem;
-    letter-spacing: 0.1em;
-    min-height: 1.2em;
-    color: #55524c;
-    transition: color 0.3s;
+    color: silver;
   }
-  #status.ok  { color: #5a9f78; }
-  #status.err { color: #9f5a5a; }
-
-  #edge-info {
-    font-size: 0.68rem;
-    color: #3d3a34;
-    letter-spacing: 0.08em;
-  }
+  #status.ok  { color: lime; }
+  #status.err { color: red; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Isomorphism</h1>
+  <h1>Unravel graphs to match</h1>
   <span id="round-badge">v = 4</span>
 </header>
 
 <div id="graphs">
-  <div class="graph-wrap">
-    <span class="graph-label">Alpha</span>
     <canvas id="c0" width="380" height="340"></canvas>
-  </div>
-  <div class="graph-wrap">
-    <span class="graph-label">Beta</span>
     <canvas id="c1" width="380" height="340"></canvas>
-  </div>
 </div>
 
 <div id="edge-info"></div>
@@ -158,12 +103,9 @@ function generateGraph(vCount) {
   const eCount = randInt(lo, hi);
 
   // build edge list; retry if we can't fill without duplicates
-  const maxEdges = vCount * (vCount - 1) / 2;
-  const clampedE = Math.min(eCount, maxEdges);
-
   const edgeSet = new Set();
   let attempts = 0;
-  while (edgeSet.size < clampedE && attempts < 100000) {
+  while (edgeSet.size < eCount && attempts < 100000) {
     attempts++;
     const a = randInt(0, vCount);
     let b = randInt(0, vCount - 1);
@@ -226,10 +168,10 @@ function newRound(keepV) {
 }
 
 // ── drawing ────────────────────────────────────────────────────────────────
-const NODE_COLOR  = '#3a3a52';
-const NODE_STROKE = '#6b6b8f';
-const EDGE_COLOR  = '#2e4a5e';
-const HIGHLIGHT   = ['#5a9f78', '#9f7a5a'];
+const NODE_COLOR  = 'black';
+const NODE_STROKE = 'gray';
+const EDGE_COLOR  = 'gray';
+const HIGHLIGHT   = ['lime', 'red'];
 
 function draw(gi, matchPairs) {
   const canvas = document.getElementById(`c${gi}`);
@@ -288,7 +230,7 @@ function drawWithMatch(matchPairs, isOk) {
       ctx.fillStyle = NODE_COLOR;
       ctx.fill();
       ctx.strokeStyle = pairIdx >= 0
-        ? (isOk ? '#5a9f78' : '#9f5a5a')
+        ? (isOk ? 'lime' : 'red')
         : NODE_STROKE;
       ctx.lineWidth = pairIdx >= 0 ? 2.5 : 1.5;
       ctx.stroke();
