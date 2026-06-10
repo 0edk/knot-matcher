@@ -1,0 +1,53 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+  gap: 20px;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+
+#graphs {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+#graphs > canvas {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+canvas {
+  cursor: default;
+  display: block;
+}
+
+canvas:active { cursor: grabbing; }
+
+#controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+button {
+  cursor: pointer;
+}
+
+#status {
+  color: silver;
+}
+#status.ok  { color: lime; }
+#status.err { color: red; }
