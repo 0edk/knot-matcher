@@ -1,14 +1,16 @@
-// ── constants ──────────────────────────────────────────────────────────────
-const W = 380, H = 340;
-const R = 14;          // node radius
-const MARGIN = 30;     // keep nodes inside canvas
+// dimensioning
+let width = 200, height = 200;
+const radCoeff = 0.05;
+function nodeRadius() {
+    return width * radCoeff;
+}
 
-// ── state ──────────────────────────────────────────────────────────────────
+// game state
 let v = 4;
 let edges = [];        // pairs [i,j], 0-indexed
 let graphs = [null, null]; // each: { nodes: [{x,y},...] }
 
-// ── graph generation ───────────────────────────────────────────────────────
+// graph generation
 function randInt(lo, hi) {          // [lo, hi)
     return lo + Math.floor(Math.random() * (hi - lo));
 }
@@ -31,7 +33,7 @@ function generateGraph(vCount) {
     return [...edgeSet].map(k => k.split(',').map(Number));
 }
 
-// ── layout ─────────────────────────────────────────────────────────────────
+// layout
 function randomLayout(vCount) {
     const nodes = [];
     const maxTries = 5000;
@@ -39,16 +41,12 @@ function randomLayout(vCount) {
         let x, y, ok;
         let tries = 0;
         do {
-            x = randInt(MARGIN + R, W - MARGIN - R);
-            y = randInt(MARGIN + R, H - MARGIN - R);
-            ok = true;
-            for (const n of nodes) {
+            x = 3 * radCoeff + Math.random() * (1 - 6 * radCoeff);
+            y = 3 * radCoeff + Math.random() * (1 - 6 * radCoeff);
+            ok = !nodes.some(n => {
                 const dx = n.x - x, dy = n.y - y;
-                if (Math.sqrt(dx*dx + dy*dy) < R * 2.8) {
-                    ok = false;
-                    break;
-                }
-            }
+                return Math.sqrt(dx*dx + dy*dy) < 2.8 * radCoeff;
+            });
             tries++;
         } while (!ok && tries < maxTries);
         nodes.push({ x, y });
@@ -56,100 +54,58 @@ function randomLayout(vCount) {
     return nodes;
 }
 
-// apply a random permutation to a copy of edges
-function permuteEdges(edgeList, vCount) {
-    const perm = Array.from({length: vCount}, (_, i) => i);
-    for (let i = vCount - 1; i > 0; i--) {
-        const j = randInt(0, i + 1);
-        [perm[i], perm[j]] = [perm[j], perm[i]];
-    }
-    return edgeList.map(([a, b]) => [perm[a], perm[b]]);
-}
-
-// ── round setup ────────────────────────────────────────────────────────────
+// round setup
 function newRound(keepV) {
     if (!keepV) { /* v already set externally */ }
     edges = generateGraph(v);
     // graph 0: canonical edges, scrambled layout
     // graph 1: permuted edges (still isomorphic), different scrambled layout
-    const permutedEdges = permuteEdges(edges, v);
     graphs[0] = { nodes: randomLayout(v), edges: edges };
-    graphs[1] = { nodes: randomLayout(v), edges: permutedEdges };
+    graphs[1] = { nodes: randomLayout(v), edges: edges };
     document.getElementById('edge-info').textContent =
-        `${v} nodes · ${edges.length} edges`;
+        `${v} nodes | ${edges.length} edges`;
     setStatus('');
     draw(0); draw(1);
 }
 
-// ── drawing ────────────────────────────────────────────────────────────────
+// drawing
 const NODE_COLOR  = 'black';
 const NODE_STROKE = 'gray';
 const EDGE_COLOR  = 'gray';
-const HIGHLIGHT   = ['lime', 'red'];
 
-function draw(gi, matchPairs) {
+function draw(gi, matchPairs, isOk) {
     const canvas = document.getElementById(`c${gi}`);
     const ctx = canvas.getContext('2d');
     const { nodes, edges: edgeList } = graphs[gi];
-    ctx.clearRect(0, 0, W, H);
+    ctx.clearRect(0, 0, width, height);
     // edges
     ctx.strokeStyle = EDGE_COLOR;
     ctx.lineWidth = 1.5;
     for (const [a, b] of edgeList) {
         ctx.beginPath();
-        ctx.moveTo(nodes[a].x, nodes[a].y);
-        ctx.lineTo(nodes[b].x, nodes[b].y);
+        ctx.moveTo(width * nodes[a].x, height * nodes[a].y);
+        ctx.lineTo(width * nodes[b].x, height * nodes[b].y);
         ctx.stroke();
     }
     // nodes
+    const R = nodeRadius();
     for (let i = 0; i < nodes.length; i++) {
         const { x, y } = nodes[i];
+        // find which pair index this node belongs to
+        const pairIdx = matchPairs ? matchPairs.findIndex(p => p[gi] === i) : -1;
         ctx.beginPath();
-        ctx.arc(x, y, R, 0, Math.PI * 2);
+        ctx.arc(width * x, height * y, R, 0, Math.PI * 2);
         ctx.fillStyle = NODE_COLOR;
         ctx.fill();
-        ctx.strokeStyle = NODE_STROKE;
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = pairIdx >= 0
+            ? (isOk ? 'lime' : 'red')
+            : NODE_STROKE;
+        ctx.lineWidth = 2;
         ctx.stroke();
     }
 }
 
-function drawWithMatch(matchPairs, isOk) {
-    // redraw both canvases highlighting matched pairs
-    [0, 1].forEach(gi => {
-        const canvas = document.getElementById(`c${gi}`);
-        const ctx = canvas.getContext('2d');
-        const { nodes, edges: edgeList } = graphs[gi];
-
-        ctx.clearRect(0, 0, W, H);
-
-        ctx.strokeStyle = EDGE_COLOR;
-        ctx.lineWidth = 1.5;
-        for (const [a, b] of edgeList) {
-            ctx.beginPath();
-            ctx.moveTo(nodes[a].x, nodes[a].y);
-            ctx.lineTo(nodes[b].x, nodes[b].y);
-            ctx.stroke();
-        }
-
-        for (let i = 0; i < nodes.length; i++) {
-            const { x, y } = nodes[i];
-            // find which pair index this node belongs to
-            const pairIdx = matchPairs.findIndex(p => p[gi] === i);
-            ctx.beginPath();
-            ctx.arc(x, y, R, 0, Math.PI * 2);
-            ctx.fillStyle = NODE_COLOR;
-            ctx.fill();
-            ctx.strokeStyle = pairIdx >= 0
-                ? (isOk ? 'lime' : 'red')
-                : NODE_STROKE;
-            ctx.lineWidth = pairIdx >= 0 ? 2.5 : 1.5;
-            ctx.stroke();
-        }
-    });
-}
-
-// ── drag handling ──────────────────────────────────────────────────────────
+// drag handling
 let drag = null; // { gi, nodeIdx, offX, offY }
 
 function canvasMouseDown(gi, e) {
@@ -157,8 +113,9 @@ function canvasMouseDown(gi, e) {
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
     const nodes = graphs[gi].nodes;
+    const R = nodeRadius();
     for (let i = 0; i < nodes.length; i++) {
-        const dx = nodes[i].x - mx, dy = nodes[i].y - my;
+        const dx = width * nodes[i].x - mx, dy = height * nodes[i].y - my;
         if (dx*dx + dy*dy <= R*R) {
             drag = { gi, nodeIdx: i, offX: dx, offY: dy };
             e.target.style.cursor = 'grabbing';
@@ -174,8 +131,9 @@ function canvasMouseMove(e) {
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
     const node = graphs[drag.gi].nodes[drag.nodeIdx];
-    node.x = Math.max(R, Math.min(W - R, mx + drag.offX));
-    node.y = Math.max(R, Math.min(H - R, my + drag.offY));
+    const R = nodeRadius();
+    node.x = Math.max(R, Math.min(width - R, mx + drag.offX)) / width;
+    node.y = Math.max(R, Math.min(height - R, my + drag.offY)) / height;
     draw(drag.gi);
 }
 
@@ -268,17 +226,19 @@ document.getElementById('btn-check').addEventListener('click', () => {
     const pairs = matchNodes();
     const matchArr = pairs.map(p => [p[0], p[1]]);
     const ok = checkIsomorphism(pairs);
-    drawWithMatch(matchArr, ok);
+    [0, 1].forEach(i => draw(i, matchArr, ok));
     if (ok) {
-        setStatus('Isomorphism confirmed — advancing to next round.', 'ok');
+        setStatus("Nice! Advancing to the next round", 'ok');
         setTimeout(() => { v++; newRound(); }, 900);
     } else {
-        setStatus('Mapping does not preserve all edges. Keep rearranging.', 'err');
+        setStatus("The graphs still look too different. Keep trying.", 'err');
     }
 });
 
-document.getElementById('btn-new').addEventListener('click', () => {
-    newRound();
+document.getElementById('btn-new').addEventListener('click', newRound);
+
+window.addEventListener("resize", ev => {
+    // TODO: dynamic canvas size
 });
 
 // ── boot ───────────────────────────────────────────────────────────────────
