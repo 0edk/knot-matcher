@@ -75,7 +75,6 @@ function newRound(keepV) {
     const permutedEdges = permuteEdges(edges, v);
     graphs[0] = { nodes: randomLayout(v), edges: edges };
     graphs[1] = { nodes: randomLayout(v), edges: permutedEdges };
-    document.getElementById('round-badge').textContent = `v = ${v}`;
     document.getElementById('edge-info').textContent =
         `${v} nodes · ${edges.length} edges`;
     setStatus('');
