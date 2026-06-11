@@ -79,17 +79,14 @@ function newRound(keepV) {
 }
 
 // drawing
-const NODE_COLOR  = 'black';
-const NODE_STROKE = 'gray';
-const EDGE_COLOR  = 'gray';
-
 function draw(gi, matchPairs, isOk) {
+    const darkTheme = matchMedia('(prefers-color-scheme: dark)').matches;
     const canvas = document.getElementById(`c${gi}`);
     const ctx = canvas.getContext('2d');
     const { nodes, edges: edgeList } = graphs[gi];
     ctx.clearRect(0, 0, width, height);
     // edges
-    ctx.strokeStyle = EDGE_COLOR;
+    ctx.strokeStyle = darkTheme ? "silver" : "gray";
     ctx.lineWidth = 1.5;
     for (const [a, b] of edgeList) {
         ctx.beginPath();
@@ -104,11 +101,11 @@ function draw(gi, matchPairs, isOk) {
         const pairIdx = matchPairs ? matchPairs.findIndex(p => p[gi] === i) : -1;
         ctx.beginPath();
         ctx.arc(width * x, height * y, R, 0, Math.PI * 2);
-        ctx.fillStyle = NODE_COLOR;
+        ctx.fillStyle = darkTheme ? "white" : "black";
         ctx.fill();
         ctx.strokeStyle = pairIdx >= 0
-            ? (isOk ? 'lime' : 'red')
-            : NODE_STROKE;
+            ? (isOk ? "lime" : "red")
+            : (darkTheme ? "silver" : "gray");
         ctx.lineWidth = 2;
         ctx.stroke();
     }
