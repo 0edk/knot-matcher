@@ -1,8 +1,18 @@
 // dimensioning
 let width = 200, height = 200;
-const radCoeff = 0.05;
-function nodeRadius() {
-    return width * radCoeff;
+const radCoeff = 0.03;
+let R;
+
+function updateDimensions(displayStyle) {
+    R = radCoeff * Math.min(width, height);
+    [0, 1].forEach(i => {
+        const c = document.getElementById(`c${i}`);
+        c.width = width;
+        c.height = height;
+        if (displayStyle) {
+            c.style.display = displayStyle;
+        }
+    });
 }
 
 // game state
@@ -88,7 +98,6 @@ function draw(gi, matchPairs, isOk) {
         ctx.stroke();
     }
     // nodes
-    const R = nodeRadius();
     for (let i = 0; i < nodes.length; i++) {
         const { x, y } = nodes[i];
         // find which pair index this node belongs to
@@ -113,7 +122,6 @@ function canvasMouseDown(gi, e) {
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
     const nodes = graphs[gi].nodes;
-    const R = nodeRadius();
     for (let i = 0; i < nodes.length; i++) {
         const dx = width * nodes[i].x - mx, dy = height * nodes[i].y - my;
         if (dx*dx + dy*dy <= R*R) {
@@ -131,7 +139,6 @@ function canvasMouseMove(e) {
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
     const node = graphs[drag.gi].nodes[drag.nodeIdx];
-    const R = nodeRadius();
     node.x = Math.max(R, Math.min(width - R, mx + drag.offX)) / width;
     node.y = Math.max(R, Math.min(height - R, my + drag.offY)) / height;
     draw(drag.gi);
@@ -237,9 +244,27 @@ document.getElementById('btn-check').addEventListener('click', () => {
 
 document.getElementById('btn-new').addEventListener('click', newRound);
 
-window.addEventListener("resize", ev => {
-    // TODO: dynamic canvas size
-});
+function setCanvasSizes(_ev) {
+    const w = window.innerWidth, h = window.innerHeight;
+    let displayStyle;
+    // side-by-side layout
+    if (w > h) {
+        width = 0.48 * w;
+        height = h - 150;
+        displayStyle = "inline-block";
+    // top-bottom layout
+    } else {
+        width = 0.9 * w;
+        height = 0.48 * (h - 150);
+        displayStyle = "block";
+    }
+    updateDimensions(displayStyle);
+    if (graphs[0]) draw(0);
+    if (graphs[1]) draw(1);
+}
 
-// ── boot ───────────────────────────────────────────────────────────────────
+window.addEventListener("resize", setCanvasSizes);
+
+// boot
+setCanvasSizes();
 newRound();

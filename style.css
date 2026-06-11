@@ -1,3 +1,4 @@
+#graphs { text-align: center; }
 #graphs > canvas { display: inline-block; }
 canvas:active { cursor: grabbing; }
 button { cursor: pointer; }
