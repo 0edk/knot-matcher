@@ -1,3 +1,4 @@
+body { max-width: none; }
 #graphs { text-align: center; }
 #graphs > canvas { display: inline-block; }
 canvas:active { cursor: grabbing; }

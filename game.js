@@ -112,7 +112,7 @@ function draw(gi, matchPairs, isOk) {
 }
 
 // drag handling
-let drag = null; // { gi, nodeIdx, offX, offY }
+let drag = null; // { gi, nodeIdx, offX, offY, dist }
 
 function canvasMouseDown(gi, e) {
     const rect = e.target.getBoundingClientRect();
@@ -121,7 +121,8 @@ function canvasMouseDown(gi, e) {
     const nodes = graphs[gi].nodes;
     for (let i = 0; i < nodes.length; i++) {
         const dx = width * nodes[i].x - mx, dy = height * nodes[i].y - my;
-        if (dx*dx + dy*dy <= R*R) {
+        const dist = dx*dx + dy*dy;
+        if (dist <= 9*R*R && (!drag || dist < drag.dist)) {
             drag = { gi, nodeIdx: i, offX: dx, offY: dy };
             e.target.style.cursor = 'grabbing';
             return;
